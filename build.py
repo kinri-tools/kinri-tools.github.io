@@ -221,7 +221,8 @@ def build(offline=False):
     ctx = {"day": day, "y3": y3, "y5": y5, "y10": y10, "rows": rows, "e": estimates(y3, y5, y10),
            "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M")}
     OUT.mkdir(exist_ok=True)
-    nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("accuracy.html", "予想の的中実績", None), ("archive.html", "金利アーカイブ", None)]
+    nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("accuracy.html", "予想の的中実績", None), ("archive.html", "金利アーカイブ", None),
+                                                                    ("fx/index.html", "為替", None)]
     for slug, _, fn in PAGES:
         title, desc, body, js = fn(ctx)
         (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
@@ -233,6 +234,15 @@ def build(offline=False):
     slugs.append("accuracy.html")
     (OUT / "feed.xml").write_text(track.feed(rows, SITE_URL or "https://kinri-tools.github.io"),
                                   encoding="utf-8")
+    # 為替(ECB参照レート)
+    try:
+        import fx
+        for slug, (title, desc, body, js) in fx.pages(fx.load()).items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+            slugs.append(slug)
+    except Exception as ex:  # 為替の取得に失敗しても他のページは公開する
+        print(f"fx skipped: {ex!r}")
     # 金利アーカイブ(実データからページごとに異なる内容を生成)
     try:
         import archive
