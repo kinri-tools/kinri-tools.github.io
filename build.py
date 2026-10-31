@@ -240,6 +240,8 @@ def build(offline=False):
     except Exception as ex:  # アーカイブ取得に失敗してもメインページは公開する
         print(f"archive skipped: {ex!r}")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
+    if os.environ.get("CUSTOM_DOMAIN"):
+        (OUT / "CNAME").write_text(os.environ["CUSTOM_DOMAIN"].strip() + "\n", encoding="utf-8")
     if SITE_URL:
         today = dt.date.today().isoformat()
         urls = "".join(f"<url><loc>{SITE_URL}/{'' if s == 'index.html' else s}</loc><lastmod>{today}</lastmod></url>"

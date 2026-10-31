@@ -23,6 +23,7 @@ jobs:
       - name: build
         env:
           SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
           ADSENSE_CLIENT: ${{ vars.ADSENSE_CLIENT }}
           GSC_VERIFY: ${{ vars.GSC_VERIFY }}
           AFFILIATE_HTML: ${{ vars.AFFILIATE_HTML }}
