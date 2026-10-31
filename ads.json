@@ -1,24 +1,51 @@
 {
   "slots": {
-    "default": ["dmm_kabu"],
-    "fx": ["dmm_fx"]
+    "default": [
+      "dmm_kabu"
+    ],
+    "fx": [
+      "dmm_fx"
+    ],
+    "tedori": [
+      "rakuten_furusato",
+      "dmm_kabu"
+    ],
+    "holiday": [
+      "rakuten_calendar"
+    ],
+    "gas": []
   },
   "ads": {
     "dmm_kabu": {
       "program": "日本株も米国株もNISAも！ポイントを貯めながらアプリで取引！【DMM 株】",
-      "lead": "国債や預金とあわせて、NISAでの資産形成を検討する方向けの証券口座です。",
+      "lead": "株式・投資信託(NISAを含む)を取引できる証券口座の広告です。",
       "html": "<a href=\"https://px.a8.net/svt/ejp?a8mat=4BESUD+7HPDTE+1WP2+15Q9SI\" rel=\"nofollow\">株取引を始めるなら【DMM 株】！(PR)</a><img border=\"0\" width=\"1\" height=\"1\" src=\"https://www16.a8.net/0.gif?a8mat=4BESUD+7HPDTE+1WP2+15Q9SI\" alt=\"\">",
-      "risk": "株式・投資信託は価格が変動し、元本割れのおそれがあります。取引手数料などの条件は各社の公式サイトで確認してください。"
+      "risk": "株式・投資信託は価格が変動するため、元本割れのおそれがあります。手数料・リスクの詳細は<a href=\"https://kabu.dmm.com/lp/ad-aa/general/\" rel=\"nofollow noopener\" target=\"_blank\">DMM.com証券の説明ページ</a>で確認してください。"
     },
     "dmm_fx": {
       "program": "【DMM FX】アフィリエイト初心者でも報酬GET！豪華な特典をプレゼント！",
-      "lead": "為替レートの値動きを取引するFX口座です。",
+      "lead": "",
       "html": "<a href=\"https://px.a8.net/svt/ejp?a8mat=4BESUD+7JHOMQ+1WP2+6HES1\" rel=\"nofollow\"><img border=\"0\" width=\"100\" height=\"100\" alt=\"DMM FX(PR)\" src=\"https://www27.a8.net/svt/bgt?aid=261031045456&wid=001&eno=01&mid=s00000008903001089000&mc=1\"></a><img border=\"0\" width=\"1\" height=\"1\" src=\"https://www12.a8.net/0.gif?a8mat=4BESUD+7JHOMQ+1WP2+6HES1\" alt=\"\">",
-      "risk": "FXは証拠金を上回る損失が生じるおそれのあるハイリスクな取引です。仕組みとリスクを十分に理解したうえで、ご自身の判断で行ってください。"
+      "risk": "FXは為替の変動により、預けた証拠金を上回る損失が生じるおそれのあるハイリスクな取引です。元本は保証されません。手数料・リスクの詳細は<a href=\"https://fx.dmm.com/lp/nmktg/lp0907open/\" rel=\"nofollow noopener\" target=\"_blank\">DMM.com証券の説明ページ</a>で確認し、仕組みを十分に理解したうえでご自身の判断で行ってください。"
+    },
+    "rakuten_furusato": {
+      "program": "【NEW】楽天アフィリエイト(楽天ふるさと納税)",
+      "lead": "ふるさと納税の控除上限は年収や家族構成で変わります。寄付の前に、自治体やポータルの案内で上限の目安を確認してください。",
+      "html": "<a href=\"https://rpx.a8.net/svt/ejp?a8mat=4BESUD+4Z7HV6+2HOM+BW8O1&rakuten=y&a8ejpredirect=http%3A%2F%2Fhb.afl.rakuten.co.jp%2Fhgc%2F0ea62065.34400275.0ea62066.204f04c0%2Fa26103176875_4BESUD_4Z7HV6_2HOM_BW8O1%3Fpc%3Dhttps%253A%252F%252Fevent.rakuten.co.jp%252Ffurusato%252F%26m%3Dhttps%253A%252F%252Fevent.rakuten.co.jp%252Ffurusato%252F\" rel=\"nofollow\">楽天ふるさと納税で返礼品を探す(PR)</a><img border=\"0\" width=\"1\" height=\"1\" src=\"https://www10.a8.net/0.gif?a8mat=4BESUD+4Z7HV6+2HOM+BW8O1\" alt=\"\">"
+    },
+    "rakuten_calendar": {
+      "program": "【NEW】楽天アフィリエイト(楽天市場: 2027年 カレンダーの検索結果)",
+      "lead": "来年のカレンダーを探す方向けのリンクです。",
+      "html": "<a href=\"https://rpx.a8.net/svt/ejp?a8mat=4BESUD+4Z7HV6+2HOM+BW8O1&rakuten=y&a8ejpredirect=http%3A%2F%2Fhb.afl.rakuten.co.jp%2Fhgc%2F0ea62065.34400275.0ea62066.204f04c0%2Fa26103176875_4BESUD_4Z7HV6_2HOM_BW8O1%3Fpc%3Dhttps%253A%252F%252Fsearch.rakuten.co.jp%252Fsearch%252Fmall%252F2027%2525E5%2525B9%2525B4%252B%2525E3%252582%2525AB%2525E3%252583%2525AC%2525E3%252583%2525B3%2525E3%252583%252580%2525E3%252583%2525BC%252F%26m%3Dhttps%253A%252F%252Fsearch.rakuten.co.jp%252Fsearch%252Fmall%252F2027%2525E5%2525B9%2525B4%252B%2525E3%252582%2525AB%2525E3%252583%2525AC%2525E3%252583%2525B3%2525E3%252583%252580%2525E3%252583%2525BC%252F\" rel=\"nofollow\">2027年のカレンダーを楽天市場で探す(PR)</a><img border=\"0\" width=\"1\" height=\"1\" src=\"https://www12.a8.net/0.gif?a8mat=4BESUD+4Z7HV6+2HOM+BW8O1\" alt=\"\">"
     },
     "dmm_cfd": {
       "program": "【DMM.com証券】DMM CFD 新規ユーザー獲得プロモーション",
       "note": "提携済みだが不掲載: レバレッジ商品で、元本割れのない運用を扱うサイトの趣旨と合わないため",
+      "html": ""
+    },
+    "tossy": {
+      "program": "【TOSSY】あらゆる取引がアプリひとつで完結！(DMM.com証券)",
+      "note": "提携済み(2026-10-31承認)だが不掲載: 差金決済取引(CFD)のアプリでレバレッジ商品。勝率ランキング等のゲーム性があり、元本リスクを避けるサイトの趣旨と合わないため",
       "html": ""
     }
   }

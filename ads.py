@@ -52,5 +52,5 @@ def render(slug: str) -> str:
                       + (f'<p class="mut">{risk}</p>' if risk else "") + "</div>")
     if not blocks:
         return ""
-    return ('<h2>PR</h2><p class="mut">以下は広告です。リンク先で口座を開設すると、当サイトが報酬を受け取ることがあります。'
+    return ('<h2>PR</h2><p class="mut">以下は広告です。リンク先で申し込みや購入があると、当サイトが報酬を受け取ることがあります。'
             "掲載は商品の推奨ではありません。</p>" + "".join(blocks))
