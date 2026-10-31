@@ -223,6 +223,8 @@ def build(offline=False):
            "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M")}
     OUT.mkdir(exist_ok=True)
     nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("accuracy.html", "予想の的中実績", None), ("archive.html", "金利アーカイブ", None),
+                                                                    ("deposit/index.html", "預金金利", None),
+                                                                    ("loan/index.html", "貸出金利", None),
                                                                     ("fx/index.html", "為替", None)]
     for slug, _, fn in PAGES:
         title, desc, body, js = fn(ctx)
@@ -235,6 +237,15 @@ def build(offline=False):
     slugs.append("accuracy.html")
     (OUT / "feed.xml").write_text(track.feed(rows, SITE_URL or "https://kinri-tools.github.io"),
                                   encoding="utf-8")
+    # 日本銀行API(預金・貸出金利)
+    try:
+        import boj
+        for slug, (title, desc, body, js) in boj.pages(ctx["e"]).items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+            slugs.append(slug)
+    except Exception as ex:
+        print(f"boj skipped: {ex!r}")
     # 為替(ECB参照レート)
     try:
         import fx
