@@ -225,6 +225,7 @@ def build(offline=False):
     nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("accuracy.html", "予想の的中実績", None), ("archive.html", "金利アーカイブ", None),
                                                                     ("deposit/index.html", "預金金利", None),
                                                                     ("loan/index.html", "貸出金利", None),
+                                                                    ("cpi/index.html", "物価", None),
                                                                     ("fx/index.html", "為替", None)]
     for slug, _, fn in PAGES:
         title, desc, body, js = fn(ctx)
@@ -246,6 +247,20 @@ def build(offline=False):
             slugs.append(slug)
     except Exception as ex:
         print(f"boj skipped: {ex!r}")
+    # 消費者物価指数(総務省)
+    try:
+        import cpi
+        dep1y = None
+        try:
+            dep1y = boj.fetch("IR02", ["DLDR43TL61YN"], "202601")["DLDR43TL61YN"][-1][1]
+        except Exception:
+            pass
+        for slug, (title, desc, body, js) in cpi.page(ctx["e"], dep1y).items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+            slugs.append(slug)
+    except Exception as ex:
+        print(f"cpi skipped: {ex!r}")
     # 為替(ECB参照レート)
     try:
         import fx
