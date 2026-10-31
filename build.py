@@ -79,7 +79,8 @@ JS_COMMON = "const TAX=%s;const f=n=>Math.round(n).toLocaleString('ja-JP')+'円'
 
 
 def layout(pages, slug, title, desc, body, js=""):
-    nav = "".join(f'<a href="{p}">{html.escape(t)}</a>' for p, t, _ in pages)
+    root = "../" * slug.count("/")
+    nav = "".join(f'<a href="{root}{p}">{html.escape(t)}</a>' for p, t, _ in pages)
     canon = f'<link rel="canonical" href="{SITE_URL}/{"" if slug == "index.html" else slug}">' if SITE_URL else ""
     ads = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" '
            'crossorigin="anonymous"></script>') if ADSENSE_CLIENT else ""
@@ -94,12 +95,12 @@ def layout(pages, slug, title, desc, body, js=""):
 <title>{html.escape(title)} | {SITE_NAME}</title>
 <meta name="description" content="{html.escape(desc)}">{canon}{gsc}{ads}
 <style>{CSS}</style></head><body>
-<header><div><a class="home" href="index.html">{SITE_NAME}</a><nav>{nav}</nav></div></header>
+<header><div><a class="home" href="{root}index.html">{SITE_NAME}</a><nav>{nav}</nav></div></header>
 <main><h1>{html.escape(title)}</h1>
 {body}
 {aff}
 </main>
-<footer>このサイトは情報提供のためのもので、特定の金融商品を勧めるものではありません。計算結果は概算です。実際の条件は各金融機関・財務省の公表資料で確認してください。<br>運営者情報・お問い合わせ: <a href="about.html">このサイトについて</a></footer>
+<footer>このサイトは情報提供のためのもので、特定の金融商品を勧めるものではありません。計算結果は概算です。実際の条件は各金融機関・財務省の公表資料で確認してください。<br>運営者情報・お問い合わせ: <a href="{root}about.html">このサイトについて</a></footer>
 <script>{JS_COMMON}{js}</script>
 <script type="application/ld+json">{ld}</script>
 </body></html>"""
@@ -219,20 +220,35 @@ def build(offline=False):
     ctx = {"day": day, "y3": y3, "y5": y5, "y10": y10, "rows": rows, "e": estimates(y3, y5, y10),
            "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M")}
     OUT.mkdir(exist_ok=True)
-    nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"]
+    nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("archive.html", "金利アーカイブ", None)]
     for slug, _, fn in PAGES:
         title, desc, body, js = fn(ctx)
         (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+    slugs = [s for s, _, _ in PAGES]
+    # 金利アーカイブ(実データからページごとに異なる内容を生成)
+    try:
+        import archive
+        data, mats = archive.load()
+        ypages, years = archive.year_pages(data, mats)
+        mpages = archive.maturity_pages(data, mats)
+        extra = {**ypages, **mpages}
+        extra["archive.html"] = archive.hub(years, [(s, t.split("の")[0]) for s, (t, _, _) in mpages.items()])
+        for slug, (title, desc, body) in extra.items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body), encoding="utf-8")
+        slugs += list(extra)
+    except Exception as ex:  # アーカイブ取得に失敗してもメインページは公開する
+        print(f"archive skipped: {ex!r}")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
     if SITE_URL:
         today = dt.date.today().isoformat()
         urls = "".join(f"<url><loc>{SITE_URL}/{'' if s == 'index.html' else s}</loc><lastmod>{today}</lastmod></url>"
-                       for s, _, _ in PAGES)
+                       for s in slugs)
         (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>'
                                          f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>',
                                          encoding="utf-8")
         (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
-    print(f"built {len(PAGES)} pages -> {OUT}  {day}  {ctx['e']}")
+    print(f"built {len(slugs)} pages -> {OUT}  {day}  {ctx['e']}")
 
 
 if __name__ == "__main__":
