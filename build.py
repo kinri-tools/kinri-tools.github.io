@@ -85,7 +85,8 @@ def layout(pages, slug, title, desc, body, js=""):
     ads = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" '
            'crossorigin="anonymous"></script>') if ADSENSE_CLIENT else ""
     gsc = f'<meta name="google-site-verification" content="{html.escape(GSC_VERIFY)}">' if GSC_VERIFY else ""
-    aff = f'<h2>PR</h2><div class="card">{AFFILIATE_HTML}</div>' if AFFILIATE_HTML else ""
+    import ads
+    aff = ads.render(slug) or (f'<h2>PR</h2><div class="card">{AFFILIATE_HTML}</div>' if AFFILIATE_HTML else "")
     ld = json.dumps({"@context": "https://schema.org", "@type": "WebApplication", "name": title,
                      "applicationCategory": "FinanceApplication", "operatingSystem": "Any",
                      "dateModified": dt.date.today().isoformat()}, ensure_ascii=False)
