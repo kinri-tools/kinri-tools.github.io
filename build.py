@@ -94,6 +94,7 @@ def layout(pages, slug, title, desc, body, js=""):
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)} | {SITE_NAME}</title>
 <meta name="description" content="{html.escape(desc)}">{canon}{gsc}{ads}
+<link rel="alternate" type="application/atom+xml" title="利率予想の変化" href="{root}feed.xml">
 <style>{CSS}</style></head><body>
 <header><div><a class="home" href="{root}index.html">{SITE_NAME}</a><nav>{nav}</nav></div></header>
 <main><h1>{html.escape(title)}</h1>
@@ -220,11 +221,18 @@ def build(offline=False):
     ctx = {"day": day, "y3": y3, "y5": y5, "y10": y10, "rows": rows, "e": estimates(y3, y5, y10),
            "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M")}
     OUT.mkdir(exist_ok=True)
-    nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("archive.html", "金利アーカイブ", None)]
+    nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("accuracy.html", "予想の的中実績", None), ("archive.html", "金利アーカイブ", None)]
     for slug, _, fn in PAGES:
         title, desc, body, js = fn(ctx)
         (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
     slugs = [s for s, _, _ in PAGES]
+    # 的中実績ページとAtomフィード(時間とともに価値が増す独自データ)
+    import track
+    t, d_, b_ = track.accuracy_page(rows)
+    (OUT / "accuracy.html").write_text(layout(nav, "accuracy.html", t, d_, b_), encoding="utf-8")
+    slugs.append("accuracy.html")
+    (OUT / "feed.xml").write_text(track.feed(rows, SITE_URL or "https://kinri-tools.github.io"),
+                                  encoding="utf-8")
     # 金利アーカイブ(実データからページごとに異なる内容を生成)
     try:
         import archive
