@@ -1,0 +1,43 @@
+# 毎日自動でビルドして GitHub Pages へ公開する。
+# 収益化の設定はリポジトリの Settings > Secrets and variables > Actions > Variables に入れる:
+#   ADSENSE_CLIENT (ca-pub-...), GSC_VERIFY (Search Console の検証コード), AFFILIATE_HTML, SITE_URL(独自ドメイン時)
+name: daily-update
+on:
+  schedule:
+    - cron: "15 0 * * *"   # 毎日 09:15 JST
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency: { group: pages, cancel-in-progress: false }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: build
+        env:
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+          ADSENSE_CLIENT: ${{ vars.ADSENSE_CLIENT }}
+          GSC_VERIFY: ${{ vars.GSC_VERIFY }}
+          AFFILIATE_HTML: ${{ vars.AFFILIATE_HTML }}
+        run: python build.py
+      - name: commit history
+        run: |
+          git config user.name "rate-bot"
+          git config user.email "rate-bot@users.noreply.github.com"
+          git add data/history.csv
+          if ! git diff --cached --quiet; then git commit -m "update history [skip ci]" && git push; fi
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: public }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages }
+    steps:
+      - uses: actions/deploy-pages@v4
