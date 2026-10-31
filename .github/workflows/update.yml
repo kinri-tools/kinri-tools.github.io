@@ -28,12 +28,13 @@ jobs:
           GSC_VERIFY: ${{ vars.GSC_VERIFY }}
           AFFILIATE_HTML: ${{ vars.AFFILIATE_HTML }}
         run: python build.py
-      - name: commit history
+      - name: commit data
         run: |
           git config user.name "rate-bot"
           git config user.email "rate-bot@users.noreply.github.com"
-          git add data/history.csv
-          if ! git diff --cached --quiet; then git commit -m "update history [skip ci]" && git push; fi
+          # 取得データのキャッシュと予想の記録(history.csv, gas.csv, gas_forecast.csv, holidays.csv, kenpo_rates.csv など)
+          git add data/
+          if ! git diff --cached --quiet; then git commit -m "update data [skip ci]" && git push; fi
       - uses: actions/upload-pages-artifact@v3
         with: { path: public }
   deploy:

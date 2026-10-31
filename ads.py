@@ -31,6 +31,12 @@ def _sponsored(code: str) -> str:
 def slot_for(slug: str) -> str:
     if slug.startswith("fx/"):
         return "fx"
+    if slug.startswith("gas/"):
+        return "gas"
+    if slug.startswith("tedori/"):
+        return "tedori"
+    if slug.startswith("holiday/"):
+        return "holiday"
     if slug in ("about.html",):
         return "none"
     return "default"

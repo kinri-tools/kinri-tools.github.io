@@ -95,7 +95,7 @@ def layout(pages, slug, title, desc, body, js=""):
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)} | {SITE_NAME}</title>
 <meta name="description" content="{html.escape(desc)}">{canon}{gsc}{adsense}
-<link rel="alternate" type="application/atom+xml" title="利率予想の変化" href="{root}feed.xml">
+<link rel="alternate" type="application/atom+xml" title="{'ガソリン価格(全国平均)の週次更新' if slug.startswith('gas/') else '利率予想の変化'}" href="{root}{'gas/feed.xml' if slug.startswith('gas/') else 'feed.xml'}">
 <style>{CSS}</style></head><body>
 <header><div><a class="home" href="{root}index.html">{SITE_NAME}</a><nav>{nav}</nav></div></header>
 <main><h1>{html.escape(title)}</h1>
@@ -213,13 +213,19 @@ PAGES = [("index.html", "国債の利率予想", page_index), ("chuto.html", "�
 
 
 def build(offline=False):
-    if offline:
+    fetched = None
+    if not offline:
+        try:
+            fetched = fetch()
+        except Exception as ex:  # 財務省の取得に失敗しても、記録済みの最新値でサイト全体を公開する
+            print(f"::warning::MOF fetch failed, using data/history.csv: {ex!r}")
+    if fetched:
+        day, y3, y5, y10 = fetched
+        rows = update_history(day, y3, y5, y10)
+    else:
         rows = list(csv.DictReader(HIST.open(encoding="utf-8")))
         last = rows[-1]
         day, y3, y5, y10 = last["mof_date"], float(last["y3"]), float(last["y5"]), float(last["y10"])
-    else:
-        day, y3, y5, y10 = fetch()
-        rows = update_history(day, y3, y5, y10)
     ctx = {"day": day, "y3": y3, "y5": y5, "y10": y10, "rows": rows, "e": estimates(y3, y5, y10),
            "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M")}
     OUT.mkdir(exist_ok=True)
@@ -227,7 +233,10 @@ def build(offline=False):
                                                                     ("deposit/index.html", "預金金利", None),
                                                                     ("loan/index.html", "貸出金利", None),
                                                                     ("cpi/index.html", "物価", None),
-                                                                    ("fx/index.html", "為替", None)]
+                                                                    ("fx/index.html", "為替", None),
+                                                                    ("gas/index.html", "ガソリン価格", None),
+                                                                    ("tedori/index.html", "手取り計算", None),
+                                                                    ("holiday/index.html", "祝日・営業日", None)]
     for slug, _, fn in PAGES:
         title, desc, body, js = fn(ctx)
         (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
@@ -261,7 +270,7 @@ def build(offline=False):
             (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
             slugs.append(slug)
     except Exception as ex:
-        print(f"cpi skipped: {ex!r}")
+        print(f"::warning::cpi skipped: {ex!r}")
     # 為替(ECB参照レート)
     try:
         import fx
@@ -270,7 +279,7 @@ def build(offline=False):
             (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
             slugs.append(slug)
     except Exception as ex:  # 為替の取得に失敗しても他のページは公開する
-        print(f"fx skipped: {ex!r}")
+        print(f"::warning::fx skipped: {ex!r}")
     # 金利アーカイブ(実データからページごとに異なる内容を生成)
     try:
         import archive
@@ -284,7 +293,41 @@ def build(offline=False):
             (OUT / slug).write_text(layout(nav, slug, title, desc, body), encoding="utf-8")
         slugs += list(extra)
     except Exception as ex:  # アーカイブ取得に失敗してもメインページは公開する
-        print(f"archive skipped: {ex!r}")
+        print(f"::warning::archive skipped: {ex!r}")
+    # ガソリン価格(資源エネルギー庁 石油製品価格調査・週次)。予想はページを作る前に記録する
+    try:
+        import gas
+        gdata = gas.load()
+        gas.record_forecast(gdata)
+        for slug, (title, desc, body, js) in gas.pages(gdata).items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+            slugs.append(slug)
+        # フィードはサイトマップに入れない
+        (OUT / "gas" / "feed.xml").write_text(gas.feed(gdata, SITE_URL or "https://kinri-tools.github.io"),
+                                              encoding="utf-8")
+    except Exception as ex:  # 取得もキャッシュもできなくても他のページは公開する
+        print(f"::warning::gas skipped: {ex!r}")
+    # 手取り計算(協会けんぽの都道府県別の保険料率・2026年の税制)
+    try:
+        import tedori
+        tdata = tedori.load()
+        for slug, (title, desc, body, js) in tedori.pages(tdata).items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+            slugs.append(slug)
+    except Exception as ex:
+        print(f"::warning::tedori skipped: {ex!r}")
+    # 祝日・営業日(内閣府「国民の祝日」CSV)
+    try:
+        import holiday
+        hdata = holiday.load()
+        for slug, (title, desc, body, js) in holiday.pages(hdata).items():
+            (OUT / slug).parent.mkdir(parents=True, exist_ok=True)
+            (OUT / slug).write_text(layout(nav, slug, title, desc, body, js), encoding="utf-8")
+            slugs.append(slug)
+    except Exception as ex:
+        print(f"::warning::holiday skipped: {ex!r}")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
     if os.environ.get("CUSTOM_DOMAIN"):
         (OUT / "CNAME").write_text(os.environ["CUSTOM_DOMAIN"].strip() + "\n", encoding="utf-8")

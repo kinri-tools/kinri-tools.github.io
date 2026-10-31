@@ -1,3 +1,4 @@
-﻿public/
+public/
 __pycache__/
 .claude/
+data/*.tmp
