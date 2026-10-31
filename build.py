@@ -61,26 +61,23 @@ def update_history(day, y3, y5, y10):
     return rows
 
 
-CSS = """:root{--bg:#fbfbf9;--fg:#1d1d1b;--mut:#6b6b66;--card:#fff;--line:#e4e4de;--acc:#1f6f5c}
-@media (prefers-color-scheme:dark){:root{--bg:#151614;--fg:#ecece6;--mut:#a3a39b;--card:#1e1f1c;--line:#33342f;--acc:#5fc2a6}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,"Hiragino Sans","Yu Gothic UI",sans-serif}
-header{border-bottom:1px solid var(--line);background:var(--card)}header div{max-width:760px;margin:0 auto;padding:10px 16px}
-header a.home{font-weight:700;color:var(--fg);text-decoration:none}nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.88rem;margin-top:4px}
-nav a{color:var(--acc)}main{max-width:760px;margin:0 auto;padding:24px 16px 64px}h1{font-size:1.55rem;line-height:1.35}h2{font-size:1.18rem;margin-top:2.2em}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-.big{font-size:2rem;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums}.mut{color:var(--mut);font-size:.9rem}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.92rem}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
-label{display:block;margin:10px 0 4px}input,select{width:100%;padding:10px;font-size:1rem;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
-.out{margin-top:14px;padding:12px 16px;border-left:4px solid var(--acc);background:var(--card)}.wrap{overflow-x:auto}
-footer{max-width:760px;margin:0 auto;padding:0 16px 40px;color:var(--mut);font-size:.82rem}"""
+JST = dt.timezone(dt.timedelta(hours=9))
+# 見た目は style.css(「付箋とメモ用紙」: 紙の地・手書き風の見出し・付箋・日付印)。ページに埋め込んで配信する。
+# 変数 --bg --fg --mut --card --line --acc はグラフ(archive.svg_line, gas.py)と holiday.py も使う。
+CSS = (HERE / "style.css").read_text(encoding="utf-8")
+# 手書き風の見出し用フォント(Klee One 600 の1種類のみ)。本文・数字は端末の標準フォント。
+FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
+         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&display=swap">')
 
 JS_COMMON = "const TAX=%s;const f=n=>Math.round(n).toLocaleString('ja-JP')+'円';const $=id=>document.getElementById(id);" % TAX
 
 
 def layout(pages, slug, title, desc, body, js=""):
     root = "../" * slug.count("/")
-    nav = "".join(f'<a href="{root}{p}">{html.escape(t)}</a>' for p, t, _ in pages)
+    jst = dt.datetime.now(JST)
+    nav = "".join('<a href="%s%s"%s>%s</a>' % (root, p, ' aria-current="page"' if p == slug else "", html.escape(t))
+                  for p, t, _ in pages)
     canon = f'<link rel="canonical" href="{SITE_URL}/{"" if slug == "index.html" else slug}">' if SITE_URL else ""
     adsense = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" '
                'crossorigin="anonymous"></script>') if ADSENSE_CLIENT else ""
@@ -89,15 +86,15 @@ def layout(pages, slug, title, desc, body, js=""):
     aff = ad_slots.render(slug) or (f'<h2>PR</h2><div class="card">{AFFILIATE_HTML}</div>' if AFFILIATE_HTML else "")
     ld = json.dumps({"@context": "https://schema.org", "@type": "WebApplication", "name": title,
                      "applicationCategory": "FinanceApplication", "operatingSystem": "Any",
-                     "dateModified": dt.date.today().isoformat()}, ensure_ascii=False)
+                     "dateModified": jst.date().isoformat()}, ensure_ascii=False)
     return f"""<!doctype html>
 <html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">{FONTS}
 <title>{html.escape(title)} | {SITE_NAME}</title>
 <meta name="description" content="{html.escape(desc)}">{canon}{gsc}{adsense}
 <link rel="alternate" type="application/atom+xml" title="{'ガソリン価格(全国平均)の週次更新' if slug.startswith('gas/') else '利率予想の変化'}" href="{root}{'gas/feed.xml' if slug.startswith('gas/') else 'feed.xml'}">
 <style>{CSS}</style></head><body>
-<header><div><a class="home" href="{root}index.html">{SITE_NAME}</a><nav>{nav}</nav></div></header>
+<header><div class="pad"><a class="home" href="{root}index.html">{SITE_NAME}</a><time class="stamp" datetime="{jst:%Y-%m-%d}" title="最終更新日"><small>更新</small> {jst:%m.%d} <small>{jst:%Y}</small></time><nav aria-label="ページ一覧"><b>目次</b>{nav}</nav></div></header>
 <main><h1>{html.escape(title)}</h1>
 {'<p class="mut">本ページにはプロモーション(広告)が含まれます。広告には「PR」と表示しています。</p>' if aff else ''}
 {body}
@@ -199,11 +196,19 @@ const a=pm(P,r,n),b=pm(P,r2,n);$('res').innerHTML=`毎月の返済額 <b>${f(a)}
 
 
 def page_about(ctx):
-    body = """<p>このサイトは、公的な統計データ(財務省「国債金利情報」)を使って、金利や利息に関する計算を手軽にできるようにした個人運営のツール集です。データは毎日自動で取得・更新しています。</p>
-<h2>データの出典</h2><p>財務省「国債金利情報」(https://www.mof.go.jp/jgbs/reference/interest_rate/)</p>
+    body = """<p>このサイトは、公的な統計データを使って、金利・利息・物価・ガソリン価格・手取りなどを手軽に確かめられるようにした、個人運営のメモ帳のようなツール集です。データは毎日自動で取得し、ページを作り直しています。</p>
+<h2>データの出典</h2><p>各ページの末尾に、出典・取得日・利用条件を記載しています。ランキング・平均・予想・計算結果は、当サイトが公表データをもとに計算したものです。</p>
+<ul><li>財務省「国債金利情報」(<a href="https://www.mof.go.jp/jgbs/reference/interest_rate/">財務省のページ</a>)</li>
+<li>日本銀行「時系列統計データ検索サイト」(預金・貸出金利)(<a href="https://www.stat-search.boj.or.jp/">日本銀行のページ</a>)</li>
+<li>総務省統計局「消費者物価指数」(<a href="https://www.stat.go.jp/data/cpi/">総務省統計局のページ</a>)</li>
+<li>欧州中央銀行(ECB)の参照為替レート(Frankfurter API経由)(<a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html">ECBのページ</a>)</li>
+<li>資源エネルギー庁「石油製品価格調査」(<a href="https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/">資源エネルギー庁のページ</a>)</li>
+<li>内閣府「国民の祝日について」(<a href="https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html">内閣府のページ</a>)</li>
+<li>全国健康保険協会(協会けんぽ)・国税庁・総務省・厚生労働省・日本年金機構などの公表資料(手取り計算)</li></ul>
+<h2>お問い合わせ</h2><p>誤りのご指摘やご意見は、<a href="https://github.com/kinri-tools/kinri-tools.github.io/issues">GitHubのIssues</a>からお知らせください。データの変更履歴と予想の記録も、同じ場所で公開しています。</p>
 <h2>免責事項</h2><p>計算結果は概算であり、正確性を保証するものではありません。金融商品の購入は、ご自身の判断で、各金融機関の資料を確認のうえ行ってください。</p>
 <h2>広告について</h2><p>当サイトは、A8.net(株式会社ファンコミュニケーションズ)などのアフィリエイトプログラムを利用しています。広告のリンク先で申し込みや購入があると、当サイトが報酬を受け取ることがあります。広告を含むページでは、ページの上部にその旨を表示し、広告そのものには「PR」と表示しています。掲載は商品の推奨ではありません。</p>
-<h2>プライバシーポリシー</h2><p>広告配信事業者はCookieを使用して、ユーザーの興味に応じた広告を表示することがあります。Cookieはブラウザの設定で無効にできます。</p>"""
+<h2>プライバシーポリシー</h2><p>当サイトは、閲覧者の個人情報を収集していません。アクセス解析ツールも使っていません。広告のリンクや計測用の画像は広告配信事業者(A8.net など)のサーバーから読み込まれ、事業者がCookieを使って成果を計測することがあります。Cookieはブラウザの設定で無効にできます。見出しの文字は Google Fonts から読み込んでいるため、閲覧時に Google のサーバーと通信します。</p>"""
     return ("このサイトについて", "運営方針・データ出典・免責事項・プライバシーポリシー。", body, "")
 
 
@@ -227,7 +232,7 @@ def build(offline=False):
         last = rows[-1]
         day, y3, y5, y10 = last["mof_date"], float(last["y3"]), float(last["y5"]), float(last["y10"])
     ctx = {"day": day, "y3": y3, "y5": y5, "y10": y10, "rows": rows, "e": estimates(y3, y5, y10),
-           "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M")}
+           "built": dt.datetime.now(JST).strftime("%Y-%m-%d %H:%M")}
     OUT.mkdir(exist_ok=True)
     nav = [(p, t, fn) for p, t, fn in PAGES if p != "about.html"] + [("accuracy.html", "予想の的中実績", None), ("archive.html", "金利アーカイブ", None),
                                                                     ("deposit/index.html", "預金金利", None),

@@ -62,17 +62,21 @@ def svg_line(points, w=720, h=220, label_fmt=str):
     lo, hi = min(vals), max(vals)
     if hi - lo < 1e-9:
         hi = lo + 0.1
-    pad = 34
-    xs = [pad + i * (w - pad - 8) / (len(points) - 1) for i in range(len(points))]
-    ys = [8 + (hi - v) * (h - 36) / (hi - lo) for v in vals]
-    pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in zip(xs, ys))
-    ticks = "".join(f'<text x="{pad-4}" y="{8+(hi-t)*(h-36)/(hi-lo)+4:.1f}" text-anchor="end">{t:.2f}</text>'
-                    for t in (hi, (hi + lo) / 2, lo))
-    step = max(1, len(points) // 6)
+    # 目盛り文字はスマホでは大きく表示する(style.css の .chart: 狭い画面で 22 単位)。
+    # 文字が切れないよう、左の余白は目盛りの桁数から決め、上下左右にも余白を取る。
+    tick_vals = (hi, (hi + lo) / 2, lo)
+    tick_txt = [f"{t:.2f}" for t in tick_vals]
+    pad, rpad, top, axis = 13 * max(len(s) for s in tick_txt) + 14, 40, 18, h - 32
+    xs = [pad + i * (w - pad - rpad) / (len(points) - 1) for i in range(len(points))]
+    yof = lambda v: top + (hi - v) * (axis - 6 - top) / (hi - lo)  # noqa: E731
+    pts = " ".join(f"{x:.1f},{yof(v):.1f}" for x, v in zip(xs, vals))
+    ticks = "".join(f'<text x="{pad-6}" y="{yof(t)+5:.1f}" text-anchor="end">{s}</text>'
+                    for t, s in zip(tick_vals, tick_txt))
+    step = max(1, (len(points) - 1) // 4)  # x軸の目盛りは5つ程度(スマホで重ならないように)
     xl = "".join(f'<text x="{xs[i]:.1f}" y="{h-6}" text-anchor="middle">{html.escape(label_fmt(points[i][0]))}</text>'
                  for i in range(0, len(points), step))
-    return (f'<svg viewBox="0 0 {w} {h}" role="img" aria-label="推移グラフ" style="width:100%;height:auto;font-size:11px;fill:var(--mut)">'
-            f'<line x1="{pad}" y1="{h-28}" x2="{w-8}" y2="{h-28}" stroke="var(--line)"/>'
+    return (f'<svg class="chart" viewBox="0 0 {w} {h}" role="img" aria-label="推移グラフ" style="width:100%;height:auto;fill:var(--mut)">'
+            f'<line x1="{pad}" y1="{axis}" x2="{w-rpad}" y2="{axis}" stroke="var(--line)"/>'
             f'<polyline fill="none" stroke="var(--acc)" stroke-width="2" points="{pts}"/>{ticks}{xl}</svg>')
 
 
