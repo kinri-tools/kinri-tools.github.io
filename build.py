@@ -82,11 +82,11 @@ def layout(pages, slug, title, desc, body, js=""):
     root = "../" * slug.count("/")
     nav = "".join(f'<a href="{root}{p}">{html.escape(t)}</a>' for p, t, _ in pages)
     canon = f'<link rel="canonical" href="{SITE_URL}/{"" if slug == "index.html" else slug}">' if SITE_URL else ""
-    ads = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" '
-           'crossorigin="anonymous"></script>') if ADSENSE_CLIENT else ""
+    adsense = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT}" '
+               'crossorigin="anonymous"></script>') if ADSENSE_CLIENT else ""
     gsc = f'<meta name="google-site-verification" content="{html.escape(GSC_VERIFY)}">' if GSC_VERIFY else ""
-    import ads
-    aff = ads.render(slug) or (f'<h2>PR</h2><div class="card">{AFFILIATE_HTML}</div>' if AFFILIATE_HTML else "")
+    import ads as ad_slots  # 変数名 adsense と衝突させない(以前は module の repr が <head> に出力されていた)
+    aff = ad_slots.render(slug) or (f'<h2>PR</h2><div class="card">{AFFILIATE_HTML}</div>' if AFFILIATE_HTML else "")
     ld = json.dumps({"@context": "https://schema.org", "@type": "WebApplication", "name": title,
                      "applicationCategory": "FinanceApplication", "operatingSystem": "Any",
                      "dateModified": dt.date.today().isoformat()}, ensure_ascii=False)
@@ -94,7 +94,7 @@ def layout(pages, slug, title, desc, body, js=""):
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)} | {SITE_NAME}</title>
-<meta name="description" content="{html.escape(desc)}">{canon}{gsc}{ads}
+<meta name="description" content="{html.escape(desc)}">{canon}{gsc}{adsense}
 <link rel="alternate" type="application/atom+xml" title="利率予想の変化" href="{root}feed.xml">
 <style>{CSS}</style></head><body>
 <header><div><a class="home" href="{root}index.html">{SITE_NAME}</a><nav>{nav}</nav></div></header>
